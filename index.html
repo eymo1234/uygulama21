@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kupon</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS Ayarları -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Kupon">
+<link rel="apple-touch-icon" href="icon-512.png">
+
+<!-- Android -->
+<meta name="theme-color" content="#081324">
+
+
+<style>
+*{box-sizing:border-box;font-family:Arial}
+body{
+  background:#0b1a28;   /* dış ortam */
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+}
+#gununMaclari{
+  color:#2ecc71;   /* yeşil */
+}
+
+#phone{
+  width:360px;
+  height:680px;
+
+  background:linear-gradient(180deg,#081324,#081324);
+  border-radius:40px;
+
+  /* 👇 TELEFON KASASI */
+  box-shadow:
+    0 0 0 8px #000,          /* siyah çerçeve */
+    0 25px 60px rgba(0,0,0,0.8);
+
+  position:relative;
+  overflow:hidden;
+}
+
+.hidden{display:none}
+
+.topbar{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:10px;
+ margin-top:10px;   /* 👈 STATUS BAR KADAR */
+ color:#fff;   /* 👈 BAKİYE + YAZILAR BEYAZ */
+}
+:root{
+  --bg-main: #071a2d;
+  --bg-phone: linear-gradient(180deg,#081324,#081324);
+  --bg-card: #ffffff;
+  --text-main: #ffffff;
+  --text-dark: #000000;
+  --accent: #2ecc71;
+  --option-bg: #1b5f8a;
+}
+body.light{
+  --bg-main: #e6edf5;
+  --bg-phone: linear-gradient(180deg,#ffffff,#dfe9f3);
+  --bg-card: #ffffff;
+  --text-main: #000000;
+  --text-dark: #000000;
+  --accent: #27ae60;
+  --option-bg: #e3f2fd;
+}
+
+#matchList{
+ max-height:500px;      /* telefon yüksekliğine uygun */
+ overflow-y:auto;
+ padding-right:4px;
+  padding-bottom:500px; /* 👈 ALTTAKİ MAÇLAR İÇİN BOŞLUK */
+}
+
+/* scrollbar küçük ve şık olsun */
+#matchList::-webkit-scrollbar{
+ width:4px;
+}
+#matchList::-webkit-scrollbar-thumb{
+ background:#2ecc71;
+ border-radius:10px;
+}
+
+.match{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ background:var(--bg-card);
+color:var(--text-dark);
+ padding:14px;
+ border-radius:14px;
+ margin:8px 0;
+ cursor:pointer;
+ font-weight:bold;
+}
+
+.team{display:flex;align-items:center;gap:6px}
+.team-logo{width:18px;height:18px}
+.team-logo.right{order:2}
+
+#options{
+ max-height:360px;
+ overflow-y:auto;
+ padding-bottom:20px;
+}
+#options::-webkit-scrollbar{width:4px}
+#options::-webkit-scrollbar-thumb{background:#2ecc71;border-radius:10px}
+
+.options{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+}
+.option{
+ background:var(--option-bg);
+ color:var(--text-dark);
+ padding:10px;
+ border-radius:12px;
+ text-align:center;
+ cursor:pointer;
+ font-size:13px;
+}
+.option.active{background:var(--accent);
+ color:#000;}
+
+h4{margin:8px 0 4px;font-size:14px;color:#12d800}
+
+#couponBox{
+ position:absolute;
+ bottom:0;left:0;
+ width:100%;
+ background:#035788;
+ padding:12px;
+ border-top-left-radius:20px;
+ border-top-right-radius:20px;
+  z-index:20;
+}
+
+button,input{
+ width:100%;
+ padding:12px;
+ border:none;
+ border-radius:12px;
+ margin-top:6px;
+}
+button{
+ background:linear-gradient(135deg,#004df3,#050646);
+ color:white;
+}
+/* IOS HOME SCREEN */
+#homeScreen{
+  position:absolute;
+  top:40px; /* saat barının altı */
+  left:0;
+  width:100%;
+  height:100%;
+  background:linear-gradient(180deg,#05011f,#1600df);
+  padding:20px;
+  box-sizing:border-box;
+    z-index:5;
+}
+
+.appGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+
+.appIcon{
+  text-align:center;
+  color:white;
+  font-size:12px;
+  cursor:pointer;
+}
+
+.appIcon img{
+  width:58px;
+  height:58px;
+  border-radius:14px;
+  margin-bottom:6px;
+}
+
+.appIcon span{
+  display:block;
+}
+
+.appIcon.disabled{
+  opacity:0.4;
+}
+
+.placeholder{
+  width:58px;
+  height:58px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.35);
+  margin:0 auto 6px;
+}
+
+/* DOCK*/
+#homeBar{
+  position:absolute;
+  bottom:8px;
+  left:50%;
+  transform:translateX(-50%);
+  width:120px;
+  height:5px;
+  background:#ffffff;
+  border-radius:5px;
+  opacity:0.6;
+}
+/* ÜST SİYAH BAR */
+#statusBar{
+  
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:40px;
+  background:#000;   /* TAM SİYAH */
+  z-index:50;
+  pointer-events:none;   /* 👈 TIKLAMAYI ALTINA GEÇİR */
+}
+
+/* SAAT – SOL ÜST */
+#gameClock{
+  position:absolute;
+  left:16px;
+  top:12px;
+  letter-spacing:-0.2px;
+  font-size:14px;
+  font-weight:600;
+  color:white;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "SF Pro Display",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+/* SAĞ STATUS ALANI */
+#statusRight{
+  position:absolute;
+  right:12px;
+  top:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+/* SİNYAL */
+.signal{
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+}
+
+.signal span{
+  width:3px;
+  background:white;
+  border-radius:1px;
+}
+
+.signal span:nth-child(1){height:4px; opacity:0.5;}
+.signal span:nth-child(2){height:6px; opacity:0.6;}
+.signal span:nth-child(3){height:8px; opacity:0.8;}
+.signal span:nth-child(4){height:10px;}
+
+/* BATARYA */
+.battery{
+  position:relative;
+  width:22px;
+  height:10px;
+  border:1.5px solid white;
+  border-radius:2px;
+}
+
+.battery::after{
+  content:"";
+  position:absolute;
+  right:-3px;
+  top:3px;
+  width:2px;
+  height:4px;
+  background:white;
+  border-radius:1px;
+}
+
+.battery-level{
+  height:100%;
+  width:70%;           /* 🔋 yüzde */
+  background:white;
+}
+#matches,
+#bet,
+#result{
+  position:absolute;
+  top:40px;              /* status bar altı */
+  left:0;
+  width:100%;
+  height:calc(100% - 40px);
+  z-index:10;            /* 👈 homeScreen'den büyük */
+}
+#result,
+#result * {
+  color: #ffffff;
+}
+#result hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.3);
+}
+#loading {
+  margin-top: 40px; /* status bar yüksekliği kadar */
+  color: #ffffff;
+}
+#newDayOverlay{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.65);
+  display:none;              /* 👈 BAŞLANGIÇTA GİZLİ */
+  align-items:center;
+  justify-content:center;
+  z-index:200;
+}
+
+#newDayOverlay.active{
+  display:flex;              /* 👈 SADECE AKTİF OLUNCA */
+}
+
+
+.newDayContent{
+  text-align:center;
+  color:#fff;
+  font-size:48px;
+  animation:zoomGlow 1.5s ease-in-out;
+}
+
+.newDayText{
+  margin-top:10px;
+  font-size:18px;
+  letter-spacing:1px;
+}
+
+@keyframes zoomGlow{
+  0%{
+    transform:scale(0.6);
+    opacity:0;
+    text-shadow:0 0 0 rgba(255,255,255,0);
+  }
+  50%{
+    transform:scale(1.05);
+    opacity:1;
+    text-shadow:0 0 25px rgba(255,255,255,0.9);
+  }
+  100%{
+    transform:scale(1);
+    opacity:1;
+    text-shadow:0 0 10px rgba(255,255,255,0.6);
+  }
+}
+
+#matchDetail{
+  position:absolute;
+  top:40px;                  /* 👈 status bar altı */
+  left:0;
+  width:100%;
+  height:calc(100% - 40px);  /* 👈 alta doğru düzgün uzasın */
+  z-index:15;
+}
+.event-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:6px 0;
+  font-size:25px;
+}
+
+.event-home{
+  width:45%;
+  text-align:left;
+}
+
+.event-away{
+  width:45%;
+  text-align:right;
+}
+
+.event-center{
+  width:10%;
+  text-align:center;
+  color:#bbbbbb;
+  font-size:19px;
+}
+#matchDetail{
+  color: #ffffff;   /* 👈 tüm yazılar beyaz */
+}
+.comment-user{
+  color:#ff4d4d;
+  font-weight:bold;
+}
+
+.comment-text{
+  color:#ffffff;
+}
+
+
+
+
+</style>
+</head>
+
+<body>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+<div id="phone">
+
+  <!-- STATUS BAR -->
+  <div id="statusBar">
+    <div id="gameClock">00:00</div>
+
+    <div id="statusRight">
+      <div class="signal">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="battery">
+        <div class="battery-level"></div>
+      </div>
+    </div>
+  </div>
+
+
+  
+
+
+<!-- HOME SCREEN -->
+<div id="homeScreen">
+
+  <div class="appGrid">
+
+    <div class="appIcon" onclick="openApp()">
+      <img src="logo.png">
+      <span>Kupon</span>
+    </div>
+
+    <!-- İleride başka uygulamalar -->
+    <div class="appIcon disabled">
+      <div class="placeholder"></div>
+      <span>Yakında</span>
+    </div>
+
+    <div class="appIcon disabled">
+      <div class="placeholder"></div>
+      <span>Yakında</span>
+    </div>
+
+    <div class="appIcon disabled">
+      <div class="placeholder"></div>
+      <span>Yakında</span>
+    </div>
+
+  </div>
+
+  <!-- DOCK -->
+  <div class="dock">
+    <div class="dockIcon"></div>
+    <div class="dockIcon"></div>
+    <div class="dockIcon"></div>
+    <div class="dockIcon"></div>
+  </div>
+
+</div>
+
+
+<!-- MATCHES -->
+<div id="matches" class="hidden">
+ <div class="topbar">
+  <div onclick="exitApp()">⬅</div>
+
+  <div onclick="toggleTheme()" style="cursor:pointer">
+    
+  </div>
+
+  <div>💰 <b id="balance">500</b> TL</div>
+</div>
+<h3 id="gununMaclari">Günün Maçları</h3>
+ <div id="matchList"></div>
+</div>
+
+<!-- BET -->
+<div id="bet" class="hidden">
+ <div class="topbar">
+  <div onclick="back()">⬅</div>
+  <div>💰 <b id="balance2">500</b> TL</div>
+ </div>
+ <h3 id="matchTitle"></h3>
+ <div id="options"></div>
+ <button id="commentBtn" onclick="openComments()"
+style="
+  position:absolute;
+  bottom:90px;
+  right:10px;
+  padding:8px 10px;
+  font-size:12px;
+  border-radius:10px;
+">
+  💬 Kullanıcı Yorumları
+</button>
+<div id="commentBox" class="hidden"
+style="
+  position:absolute;
+  bottom:140px;
+  right:10px;
+  background:#1e1e1e;
+  padding:10px;
+  border-radius:12px;
+  width:260px;
+  z-index:50;
+">
+  <div id="commentContent"></div>
+</div>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="hidden" style="text-align:center">
+ <h2>⏳ Maçlar Oynanıyor...</h2>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="hidden">
+ <div class="topbar">
+  <div>📊 Sonuç</div>
+  <div>💰 <b id="balance3">500</b> TL</div>
+ </div>
+ <div id="resultList"></div>
+ <button onclick="closeResult()">Tamam</button>
+</div>
+<!-- MATCH DETAIL -->
+<div id="matchDetail" class="hidden">
+  <div class="topbar">
+    <div onclick="closeMatchDetail()">⬅</div>
+    <div>📋 Maç Detayı</div>
+  </div>
+  <div id="matchDetailContent" style="padding:12px"></div>
+</div>
+
+
+<!-- COUPON -->
+<div id="couponBox" class="hidden">
+ <b>Kuponum</b>
+ <div id="couponItems"></div>
+ <div>Toplam Oran: <b id="totalOdds">0.00</b></div>
+ <div id="possibleWin">Olası Kazanç: 0 TL</div>
+ <input id="stake" type="number" placeholder="Misli (Min 50 TL)" oninput="updatePossibleWin()">
+ <button onclick="play()">Oyna</button>
+</div>
+<!-- 🌙 YENİ GÜN ANİMASYONU -->
+<div id="newDayOverlay" >
+  <div class="newDayContent">
+    🌙
+    <div class="newDayText">Yeni Gün Başladı</div>
+  </div>
+</div>
+
+<div id="homeBar"></div>
+</div>
+
+<script>
+let balance = Number(localStorage.getItem("balance")) || 500;
+let coupon=[];
+let matchesData=[];
+let currentMatch=null;
+let currentMatchName = null;
+let dailyMatch = null;
+let dailyMatchRewarded = false;
+let lastResults = [];
+let activeCommentEffects = [];
+let matchComments = {};
+const GAME_CLOCK_KEY = "gameClockStart";
+const MATCHES_KEY = "savedMatches";
+const MATCH_DAY_KEY = "matchDay";
+const SAVED_DAY_KEY = "savedDay";
+const SAVED_MATCHES_KEY = "savedMatches";
+const commentPool = [
+  { text: "Evi arabayı sat kg bas", effect: "kgv" },
+  { text: "Risksizzzz 1.5 üst bankoo", effect: "o15" },
+  { text: "Dedem söyledi bu maç net kg yok", effect: "kgy" },
+  { text: "Riske gerek yok çifte şans 1 2 yeter", effect: "dc12" },
+  { text: "2.5 üste tüm parayı basın ve bekleyin", effect: "o25" },
+  { text: "Babaannem ölmeden önce 2.5 alt dedi güvenin", effect: "u25" },
+  { text: "Maçtaki adamlar bile 1.5 alt oynamış bas baasss", effect: "u15" }
+];
+const commentUsers = [
+  "Eymen Sikin",
+  "Enes Götten Yer",
+  "Burak Karaam",
+  "Kayra Seyham",
+  "Emirhan Sikikgöt",
+  "Mustasakso Doğan"
+];
+
+
+
+let gameClockStart = localStorage.getItem(GAME_CLOCK_KEY)
+  ? Number(localStorage.getItem(GAME_CLOCK_KEY))
+  : Date.now();
+
+localStorage.setItem(GAME_CLOCK_KEY, gameClockStart);
+
+
+
+
+const pickNames = {
+  ms1:  { type: "Maç Sonucu", name: "1" },
+  msx:  { type: "Maç Sonucu", name: "X" },
+  ms2:  { type: "Maç Sonucu", name: "2" },
+
+  o15:  { type: "1.5 Gol", name: "Üst" },
+  u15:  { type: "1.5 Gol", name: "Alt" },
+
+  o25:  { type: "2.5 Gol", name: "Üst" },
+  u25:  { type: "2.5 Gol", name: "Alt" },
+
+  kgv:  { type: "Karşılıklı Gol", name: "Var" },
+  kgy:  { type: "Karşılıklı Gol", name: "Yok" },
+
+  dc1x: { type: "Çifte Şans", name: "1X" },
+  dcx2: { type: "Çifte Şans", name: "X2" },
+  dc12: { type: "Çifte Şans", name: "12" },
+
+  ht1:  { type: "İlk Yarı", name: "1" },
+  htx:  { type: "İlk Yarı", name: "X" },
+  ht2:  { type: "İlk Yarı", name: "2" },
+
+  g01:  { type: "Toplam Gol", name: "0-1" },
+  g23:  { type: "Toplam Gol", name: "2-3" },
+  g4p:  { type: "Toplam Gol", name: "4+" }
+};
+
+const leagues = {
+  "La Liga": [
+    "Real Madrid",
+    "Barcelona",
+    "Atletico Madrid",
+    "Sevilla",
+    "Valencia",
+    "Villarreal"
+  ],
+
+  "Premier League": [
+    "Manchester City",
+    "Liverpool",
+    "Chelsea",
+    "Arsenal",
+    "Manchester United",
+    "Tottenham"
+  ],
+
+  "Bundesliga": [
+    "Bayern Münih",
+    "Borussia Dortmund",
+    "RB Leipzig",
+    "Bayer Leverkusen",
+    "Eintracht Frankfurt",
+    "Wolfsburg"
+  ],
+
+  "Serie A": [
+    "Juventus",
+    "Inter",
+    "Milan",
+    "Napoli",
+    "Roma",
+    "Lazio"
+  ],
+
+  "Süper Lig": [
+    "Fenerbahçe",
+    "Galatasaray",
+    "Beşiktaş",
+    "Trabzonspor",
+    "Başakşehir",
+    "Samsunspor"
+  ]
+};
+
+
+const teamIcons={
+ "Real Madrid":"real.png",
+ "Barcelona":"barca.png",
+ "Manchester City":"city.png",
+ "Liverpool":"liverpool.png",
+ "Bayern Münih":"bayern.png",
+ "PSG":"psg.png",
+ "Juventus":"juve.png",
+ "Fenerbahçe":"fener.png",
+ "Galatasaray":"gs.png",
+ "Beşiktaş":"bjk.png",
+ "Atletico Madrid":"atl.png",
+ "Benfica":"benfica.png",
+ "Trabzonspor":"ts.png",
+ "Chelsea":"chelsea.png",
+ "Samsunspor":"samsun.png",
+  "Başakşehir":"basak.png",
+   "Roma":"roma.png",
+    "Inter":"inter.png",
+     "Napoli":"napoli.png",
+      "Milan":"milan.png",
+       "Lazio":"lazio.png",
+        "Borussia Dortmund":"dortmund.png",
+         "RB Leipzig":"leipzig.png", 
+          "Bayer Leverkusen":"leverkusen.png",
+           "Eintracht Frankfurt":"frank.png",
+            "Wolfsburg":"wolf.png",
+             "Manchester United":"united.png",
+              "Tottenham":"totnam.png",
+               "Sevilla":"sevilla.png",
+                "Villarreal":"vil.png",
+                 "Valencia":"valenc.png",
+                 "Arsenal":"arsenal.png"
+
+};
+
+
+const teamPower = {
+ "Real Madrid": 98,
+"Barcelona": 92,
+"Atletico Madrid": 88,
+"Sevilla": 82,
+"Villarreal": 78,
+"Valencia": 77,
+
+/* PREMIER LEAGUE */
+"Manchester City": 94,
+"Liverpool": 92,
+"Chelsea": 86,
+"Arsenal": 92,
+"Manchester United": 87,
+"Tottenham": 86,
+
+/* BUNDESLIGA */
+"Bayern Münih": 94,
+"Borussia Dortmund": 88,
+"RB Leipzig": 86,
+"Bayer Leverkusen": 85,
+"Eintracht Frankfurt": 82,
+"Wolfsburg": 78,
+
+/* SERIE A */
+"Juventus": 88,
+"Inter": 90,
+"Milan": 89,
+"Napoli": 88,
+"Roma": 85,
+"Lazio": 84,
+
+/* SÜPER LİG */
+"Fenerbahçe": 85,
+"Galatasaray": 84,
+"Beşiktaş": 80,
+"Trabzonspor": 79,
+"Başakşehir": 76,
+"Samsunspor": 75
+};
+
+function toggleTheme(){
+  document.body.classList.toggle("light");
+
+  const isLight = document.body.classList.contains("light");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+}
+
+(function(){
+  const saved = localStorage.getItem("theme");
+  if(saved === "light"){
+    document.body.classList.add("light");
+  }
+})();
+function getGameDay(){
+  const elapsedSeconds = Math.floor(
+    (Date.now() - gameClockStart) / 1000
+  );
+
+  const totalGameMinutes = elapsedSeconds; // 1 sn = 1 dk
+  return Math.floor(totalGameMinutes / (24 * 60));
+}
+
+function openComments(){
+  const box = document.getElementById("commentBox");
+  const content = document.getElementById("commentContent");
+
+  box.classList.toggle("hidden");
+  content.innerHTML = "";
+
+  // Eğer bu maç için yorumlar daha önce oluşturulduysa
+  if(matchComments[currentMatchName]){
+    const saved = matchComments[currentMatchName];
+    activeCommentEffects = saved.effects;
+
+    saved.comments.forEach(c => {
+      content.innerHTML += `
+        <div style="margin-bottom:6px">
+          <span class="comment-user">${c.user}</span>:
+          <span class="comment-text">${c.text}</span>
+        </div>
+      `;
+    });
+    return;
+  }
+
+  // ❗ İlk kez açılıyorsa üret
+  activeCommentEffects = [];
+
+  const count = Math.random() < 0.5 ? 1 : 2;
+  const shuffled = [...commentPool].sort(() => Math.random() - 0.5);
+
+  let commentsForMatch = [];
+
+  for(let i = 0; i < count; i++){
+    const c = shuffled[i];
+    const user = commentUsers[
+      Math.floor(Math.random() * commentUsers.length)
+    ];
+
+    activeCommentEffects.push(c.effect);
+
+    commentsForMatch.push({
+      user: user,
+      text: c.text
+    });
+
+    content.innerHTML += `
+      <div style="margin-bottom:6px">
+        <span class="comment-user">${user}</span>:
+        <span class="comment-text">${c.text}</span>
+      </div>
+    `;
+  }
+
+  // 🔒 Bu maça özel kaydet
+  matchComments[currentMatchName] = {
+    comments: commentsForMatch,
+    effects: [...activeCommentEffects]
+  };
+}
+
+function hasCommentBoost(type){
+  return activeCommentEffects.includes(type);
+}
+
+
+
+function showNewDayAnimation(){
+  const overlay = document.getElementById("newDayOverlay");
+  overlay.classList.add("active");
+
+  setTimeout(() => {
+    overlay.classList.remove("active");
+  }, 1500);
+}
+
+
+function generateMatches(){
+  matchesData = [];
+
+  Object.keys(leagues).forEach(leagueName => {
+    let teams = [...leagues[leagueName]];
+    teams.sort(() => Math.random() - 0.5);
+
+    for(let i = 0; i < teams.length; i += 2){
+      matchesData.push({
+        league: leagueName,
+        name: `${teams[i]} - ${teams[i+1]}`,
+        fav: ["home","away","equal"][Math.floor(Math.random()*3)],
+        isDaily: false
+      });
+    }
+  });
+
+  // 🔥 GÜNÜN MAÇINI SADECE 1 KEZ SEÇ
+  const index = Math.floor(Math.random() * matchesData.length);
+  matchesData[index].isDaily = true;
+  dailyMatch = matchesData[index];
+  dailyMatchRewarded = false;
+
+  // 🔝 EN ÜSTE AL
+  matchesData = [
+    matchesData[index],
+    ...matchesData.filter((_, i) => i !== index)
+  ];
+}
+
+
+
+
+function getPower(team){
+  return teamPower[team] ?? 80; // yoksa 80 ver
+}
+function oddsForMatch(matchName){
+  const ODDS_FACTOR = 0.85; // %15 düşürme
+  const [homeTeam, awayTeam] = matchName.split(" - ");
+
+  const hp = getPower(homeTeam);
+  const ap = getPower(awayTeam);
+
+  const diff = hp - ap; // ✅ ÖNCE diff
+  const goalAvg = 2.4 + Math.abs(diff) / 40; // ✅ SONRA goalAvg
+
+  /* MAÇ SONUCU */
+  let ms1 = 2.20 - diff / 45;
+  let ms2 = 2.20 + diff / 45;
+  let msx = 3.30;
+
+  ms1 = Math.min(Math.max(ms1, 1.20), 4.80);
+  ms2 = Math.min(Math.max(ms2, 1.20), 6.80);
+
+  /* 1.5 GOL */
+  const o15 = diff > 5 ? 1.35 : 1.55;
+  const u15 = diff > 5 ? 3.10 : 2.50;
+
+  /* 2.5 GOL */
+  const o25 = diff > 10 ? 1.65 : 1.85;
+  const u25 = diff > 10 ? 2.15 : 1.95;
+
+  /* KG */
+  const kgv = Math.abs(diff) < 15 ? 1.65 : 2.20;
+  const kgy = Math.abs(diff) < 15 ? 2.10 : 1.60;
+
+  /* ÇİFTE ŞANS */
+  const dc1x = diff >= 0 ? 1.25 : 1.55;
+  const dcx2 = diff <= 0 ? 1.30 : 1.60;
+  const dc12 = 1.35;
+
+  /* İLK YARI */
+  const ht1 = Math.min(Math.max(2.40 - diff / 60, 1.50), 3.80);
+  const htx = 2.10;
+  const ht2 = Math.min(Math.max(2.60 + diff / 60, 1.60), 4.20);
+
+  /* İLK YARI SKOR 
+  const ht00 = 2.40;
+  const ht10 = diff > 10 ? 3.10 : 3.60;
+  const ht01 = diff < -10 ? 3.10 : 3.60;
+  const ht11 = 4.50;*/
+
+  /* TOPLAM GOL ARALIĞI */
+  const g01 = goalAvg < 2 ? 2.20 : 2.60;
+  const g23 = 1.95;
+  const g4p = goalAvg > 3 ? 2.10 : 2.70;
+const isDaily = dailyMatch && dailyMatch.name === matchName;
+const boost = isDaily ? 1.05 : 1;
+ return {
+  ms1:+(ms1 * ODDS_FACTOR* boost).toFixed(2),
+  msx:+(msx * ODDS_FACTOR* boost).toFixed(2),
+  ms2:+(ms2 * ODDS_FACTOR* boost).toFixed(2),
+
+  o15:+(o15 * ODDS_FACTOR* boost).toFixed(2),
+  u15:+(u15 * ODDS_FACTOR* boost).toFixed(2),
+
+  o25:+(o25 * ODDS_FACTOR* boost).toFixed(2),
+  u25:+(u25 * ODDS_FACTOR* boost).toFixed(2),
+
+  kgv:+(kgv * ODDS_FACTOR* boost).toFixed(2),
+  kgy:+(kgy * ODDS_FACTOR* boost).toFixed(2),
+
+  dc1x:+(dc1x * ODDS_FACTOR* boost).toFixed(2),
+  dcx2:+(dcx2 * ODDS_FACTOR* boost).toFixed(2),
+  dc12:+(dc12 * ODDS_FACTOR* boost).toFixed(2),
+
+  ht1:+(ht1 * ODDS_FACTOR* boost).toFixed(2),
+  htx:+(htx * ODDS_FACTOR* boost).toFixed(2),
+  ht2:+(ht2 * ODDS_FACTOR* boost).toFixed(2),
+
+ /* ht00:+(ht00 * ODDS_FACTOR).toFixed(2),
+  ht10:+(ht10 * ODDS_FACTOR).toFixed(2),
+  ht01:+(ht01 * ODDS_FACTOR).toFixed(2),
+  ht11:+(ht11 * ODDS_FACTOR).toFixed(2),*/
+
+  g01:+(g01 * ODDS_FACTOR* boost).toFixed(2),
+  g23:+(g23 * ODDS_FACTOR* boost).toFixed(2),
+  g4p:+(g4p * ODDS_FACTOR* boost).toFixed(2)
+
+};
+}
+
+
+
+
+function openApp(){
+  document.getElementById("homeScreen").classList.add("hidden");
+  matches.classList.remove("hidden");
+  couponBox.classList.remove("hidden");
+
+ loadMatches();
+renderMatches();
+  updateBalance();
+}
+
+
+function exitApp(){
+  matches.classList.add("hidden");
+  bet.classList.add("hidden");
+  result.classList.add("hidden");
+  couponBox.classList.add("hidden");
+
+  document.getElementById("homeScreen").classList.remove("hidden");
+}
+
+
+function back(){
+ bet.classList.add("hidden");
+ matches.classList.remove("hidden");
+ couponBox.classList.remove("hidden");
+}
+function loadMatches(){
+  const today = getGameDay();
+  const savedDay = Number(localStorage.getItem(SAVED_DAY_KEY));
+  const savedMatches = localStorage.getItem(SAVED_MATCHES_KEY);
+
+  // ✅ Aynı gün → kayıtlı maçları kullan
+  if(savedMatches && savedDay === today){
+    matchesData = JSON.parse(savedMatches);
+    dailyMatch = matchesData.find(m => m.isDaily);
+    dailyMatchRewarded = false;
+  }
+  // 🌅 Yeni gün → yeni maç üret
+  else{
+    generateMatches();
+    localStorage.setItem(SAVED_MATCHES_KEY, JSON.stringify(matchesData));
+    localStorage.setItem(SAVED_DAY_KEY, today);
+  }
+}
+
+
+
+function renderMatches(){
+  matchList.innerHTML = "";
+
+  let currentLeague = "";
+let dailySkipped = false;
+
+matchesData.forEach(m => {
+
+  // 🔥 Günün maçıysa lig başlığı yazma
+  if(m.isDaily && !dailySkipped){
+    dailySkipped = true;
+  }
+  // 📌 Normal maçsa lig başlığı yaz
+  else if(m.league !== currentLeague){
+    currentLeague = m.league;
+    matchList.innerHTML += `<h4 style="margin-top:12px">${currentLeague}</h4>`;
+  }
+
+
+    const [h,a] = m.name.split(" - ");
+
+    // 🔥 GÜNÜN MAÇI ETİKETİ (SADECE MAÇ İÇİN)
+    if(m.isDaily){
+  matchList.innerHTML += `
+    <div style="
+      color:#f1c40f;
+      font-size:12px;
+      margin:4px 0 2px 6px;
+      font-weight:bold;
+    ">
+      🔥 Günün Maçı
+    </div>
+  `;
+}
+
+
+    matchList.innerHTML += `
+      <div class="match" onclick="openMatch('${m.name}')">
+        <span class="team">
+          ${h}
+          ${teamIcons[h] ? `<img class="team-logo" src="${teamIcons[h]}">` : ""}
+        </span>
+        <span>-</span>
+        <span class="team">
+          ${a}
+          ${teamIcons[a] ? `<img class="team-logo right" src="${teamIcons[a]}">` : ""}
+        </span>
+      </div>
+    `;
+  });
+}
+
+function getGameClock(){
+  const elapsedSeconds = Math.floor(
+    (Date.now() - gameClockStart) / 1000
+  );
+
+  // 1 saniye = 1 oyun dakikası
+  const totalGameMinutes = elapsedSeconds;
+
+  const hours = Math.floor((totalGameMinutes / 60) % 24);
+  const minutes = totalGameMinutes % 60;
+
+  return {
+    h: String(hours).padStart(2, "0"),
+    m: String(minutes).padStart(2, "0")
+  };
+}
+let lastGameDay = getGameDay();
+
+function startGameClock(){
+  setInterval(() => {
+    const t = getGameClock();
+    document.getElementById("gameClock").innerText = `${t.h}:${t.m}`;
+
+    const currentDay = getGameDay();
+
+    // 🌅 GÜN DEĞİŞTİ Mİ?
+    if(currentDay !== lastGameDay){
+      lastGameDay = currentDay;
+
+      showNewDayAnimation();
+
+
+      // 🔄 YENİ GÜN → YENİ MAÇLAR
+      generateMatches();
+      localStorage.setItem(SAVED_MATCHES_KEY, JSON.stringify(matchesData));
+      localStorage.setItem(SAVED_DAY_KEY, currentDay);
+
+      renderMatches(); // ekranda anında güncellensin
+    }
+
+  }, 1000);
+}
+
+startGameClock();
+
+function openMatch(name){
+  currentMatchName = name;
+ currentMatch=matchesData.find(m=>m.name===name);
+ matches.classList.add("hidden");
+ bet.classList.remove("hidden");
+ couponBox.classList.add("hidden");
+ matchTitle.innerText=name;
+ renderOptions();
+}
+
+function renderOptions() {
+  const o = oddsForMatch(currentMatch.name);
+
+  function isActive(pick) {
+    return coupon.find(c => c.match === currentMatch.name && c.pick === pick) ? "active" : "";
+  }
+
+  options.innerHTML = `
+    <h4>Maç Sonucu</h4>
+    <div class="options">
+      <div class="option ${isActive("ms1")}" onclick="pick('ms1',${o.ms1})">1<br>${o.ms1}</div>
+      <div class="option ${isActive("msx")}" onclick="pick('msx',${o.msx})">X<br>${o.msx}</div>
+      <div class="option ${isActive("ms2")}" onclick="pick('ms2',${o.ms2})">2<br>${o.ms2}</div>
+    </div>
+
+    <h4>1.5 GOL</h4>
+    <div class="options">
+      <div class="option ${isActive("o15")}" onclick="pick('o15',${o.o15})">1.5 Üst<br>${o.o15}</div>
+      <div class="option ${isActive("u15")}" onclick="pick('u15',${o.u15})">1.5 Alt<br>${o.u15}</div>
+    </div>
+
+    <h4>2.5 GOL</h4>
+    <div class="options">
+      <div class="option ${isActive("o25")}" onclick="pick('o25',${o.o25})">2.5 Üst<br>${o.o25}</div>
+      <div class="option ${isActive("u25")}" onclick="pick('u25',${o.u25})">2.5 Alt<br>${o.u25}</div>
+    </div>
+
+    <h4>KG</h4>
+    <div class="options">
+      <div class="option ${isActive("kgv")}" onclick="pick('kgv',${o.kgv})">Var<br>${o.kgv}</div>
+      <div class="option ${isActive("kgy")}" onclick="pick('kgy',${o.kgy})">Yok<br>${o.kgy}</div>
+    </div>
+
+    <h4>Çifte Şans</h4>
+    <div class="options">
+      <div class="option ${isActive("dc1x")}" onclick="pick('dc1x',${o.dc1x})">1X<br>${o.dc1x}</div>
+      <div class="option ${isActive("dcx2")}" onclick="pick('dcx2',${o.dcx2})">X2<br>${o.dcx2}</div>
+      <div class="option ${isActive("dc12")}" onclick="pick('dc12',${o.dc12})">12<br>${o.dc12}</div>
+    </div>
+
+    <h4>İlk Yarı</h4>
+    <div class="options">
+      <div class="option ${isActive("ht1")}" onclick="pick('ht1',${o.ht1})">1<br>${o.ht1}</div>
+      <div class="option ${isActive("htx")}" onclick="pick('htx',${o.htx})">X<br>${o.htx}</div>
+      <div class="option ${isActive("ht2")}" onclick="pick('ht2',${o.ht2})">2<br>${o.ht2}</div>
+    </div>
+
+
+    <h4>Toplam Gol Aralığı</h4>
+    <div class="options">
+      <div class="option ${isActive("g01")}" onclick="pick('g01',${o.g01})">0-1<br>${o.g01}</div>
+      <div class="option ${isActive("g23")}" onclick="pick('g23',${o.g23})">2-3<br>${o.g23}</div>
+      <div class="option ${isActive("g4p")}" onclick="pick('g4p',${o.g4p})">4+<br>${o.g4p}</div>
+    </div>
+  `;
+}
+
+
+
+function pick(pick,odd){
+ let i=coupon.findIndex(c=>c.match===currentMatch.name);
+ if(i>-1&&coupon[i].pick===pick) coupon.splice(i,1);
+ else{
+  if(i>-1) coupon.splice(i,1);
+  coupon.push({match:currentMatch.name,pick,odd});
+ }
+ renderOptions();
+ renderCoupon();
+}
+
+function renderCoupon(){
+  couponItems.innerHTML = "";
+
+  let total = 1;
+
+  coupon.forEach(c => {
+    total *= c.odd;
+
+    const info = pickNames[c.pick];
+
+    couponItems.innerHTML += `
+      <div style="margin-bottom:8px">
+        <b>${c.match}</b><br>
+        <small>
+          ${info.type}: ${info.name}
+          <span style="float:right">${c.odd}</span>
+        </small>
+      </div>
+    `;
+  });
+
+  if(coupon.length === 0){
+    totalOdds.innerText = "0.00";
+    possibleWin.innerText = "Olası Kazanç: 0 TL";
+    return;
+  }
+
+  totalOdds.innerText = total.toFixed(2);
+  updatePossibleWin();
+}
+
+
+function simulate(match){
+
+  // --- TAKIMLAR ---
+  const teams = match.name.split(" - ");
+  const home = teams[0];
+  const away = teams[1];
+
+  const hp = getPower(home);
+  const ap = getPower(away);
+  const diff = hp - ap;
+
+  // --- GOL BEKLENTİSİ ---
+  let homeExp = 1.1 + diff / 28;
+  let awayExp = 1.1 - diff / 30;
+  // 💬 Kullanıcı yorumları etkisi (%20)
+if(hasCommentBoost("o15") || hasCommentBoost("o25")){
+  homeExp *= 1.2;
+  awayExp *= 1.2;
+}
+
+if(hasCommentBoost("u15") || hasCommentBoost("u25")){
+  homeExp *= 0.8;
+  awayExp *= 0.8;
+}
+
+if(hasCommentBoost("kgv")){
+  homeExp *= 1.15;
+  awayExp *= 1.15;
+}
+
+if(hasCommentBoost("kgy")){
+  if(Math.random() < 0.5) homeExp *= 0.7;
+  else awayExp *= 0.7;
+}
+
+
+  homeExp = Math.max(0.2, homeExp);
+  awayExp = Math.max(0.2, awayExp);
+
+  // 🏟 İç saha avantajı
+  homeExp *= 1.10;
+
+  // --- EVENT LİSTESİ (ÇOK ÖNEMLİ) ---
+  let events = [];
+
+  // --- GOL ÜRETME FONKSİYONU ---
+  function genGoals(exp){
+    let g = 0;
+    for(let i = 0; i < 5; i++){
+      if(Math.random() < exp / 5) g++;
+    }
+    return g;
+  }
+
+  // --- GOL DENEMELERİ ---
+  let realHomeGoals = 0;
+  let realAwayGoals = 0;
+
+  const homeAttempts = genGoals(homeExp);
+  const awayAttempts = genGoals(awayExp);
+
+  // --- EV SAHİBİ GOLLER ---
+  for(let i = 0; i < homeAttempts; i++){
+    const cancelled = Math.random() < 0.05;
+
+    events.push({
+      type: "goal",
+      team: "home",
+      minute: Math.floor(Math.random() * 90) + 1,
+      cancelled: cancelled,
+      cancelReason: cancelled
+        ? (Math.random() < 0.5 ? "Ofsayt" : "Elle oynama")
+        : null
+    });
+
+    if(!cancelled){
+      realHomeGoals++;
+    }
+  }
+
+  // --- DEPLASMAN GOLLER ---
+  for(let i = 0; i < awayAttempts; i++){
+    const cancelled = Math.random() < 0.05;
+
+    events.push({
+      type: "goal",
+      team: "away",
+      minute: Math.floor(Math.random() * 90) + 1,
+      cancelled: cancelled,
+      cancelReason: cancelled
+        ? (Math.random() < 0.5 ? "Ofsayt" : "Elle oynama")
+        : null
+    });
+
+    if(!cancelled){
+      realAwayGoals++;
+    }
+  }
+
+  // --- SKOR ---
+  const ftH = realHomeGoals;
+  const ftA = realAwayGoals;
+
+  const htH = Math.floor(ftH / 2);
+  const htA = Math.floor(ftA / 2);
+
+  // --- EVENTLERİ SIRALA ---
+  events.sort((a, b) => a.minute - b.minute);
+
+  // --- RETURN ---
+  return {
+    ht: { h: htH, a: htA },
+    ft: { h: ftH, a: ftA },
+    events: events
+  };
+}
+
+
+
+function play(){
+ let stakeVal=Number(stake.value);
+ if(stakeVal < 50)
+  return alert("Minimum misli 50 TL");
+if(stakeVal > balance)
+  return alert("Yetersiz bakiye");
+if(coupon.length === 0)
+  return alert("Kupon boş");
+ matches.classList.add("hidden");
+ couponBox.classList.add("hidden");
+ loading.classList.remove("hidden");
+setTimeout(()=>{
+  loading.classList.add("hidden");
+  result.classList.remove("hidden");
+
+  let win = true;
+  resultList.innerHTML = "";
+
+  lastResults = []; // ✅ TEK VE DOĞRU YER
+
+  coupon.forEach((c,i)=>{
+    let m = matchesData.find(x => x.name === c.match);
+    let s = simulate(m);
+
+    c.details = s;           // ✅
+    lastResults.push(c);     // ✅
+
+    let ht = s.ht;
+    let ft = s.ft;
+    let t = ft.h + ft.a;
+   let ok =
+  /* MAÇ SONUCU */
+  (c.pick==="ms1" && ft.h > ft.a) ||
+  (c.pick==="msx" && ft.h === ft.a) ||
+  (c.pick==="ms2" && ft.a > ft.h) ||
+
+  /* İLK YARI */
+  (c.pick==="ht1" && ht.h > ht.a) ||
+  (c.pick==="htx" && ht.h === ht.a) ||
+  (c.pick==="ht2" && ht.a > ht.h) ||
+
+  /* KG */
+  (c.pick==="kgv" && ft.h > 0 && ft.a > 0) ||
+  (c.pick==="kgy" && (ft.h === 0 || ft.a === 0)) ||
+
+  /* 1.5 GOL */
+  (c.pick==="o15" && t > 1) ||
+  (c.pick==="u15" && t < 2) ||
+
+  /* 2.5 GOL */
+  (c.pick==="o25" && t > 2) ||
+  (c.pick==="u25" && t < 3) ||
+
+  /* ÇİFTE ŞANS */
+  (c.pick==="dc1x" && ft.h >= ft.a) ||
+  (c.pick==="dcx2" && ft.a >= ft.h) ||
+  (c.pick==="dc12" && ft.h !== ft.a) ||
+
+  /* TOPLAM GOL ARALIĞI */
+  (c.pick==="g01" && t <= 1) ||
+  (c.pick==="g23" && t >= 2 && t <= 3) ||
+  (c.pick==="g4p" && t >= 4);
+
+   if(!ok) win=false;
+   const info = pickNames[c.pick];
+  
+
+
+const teams = c.match.split(" - ");
+const homeTeam = teams[0];
+const awayTeam = teams[1];
+
+resultList.innerHTML += `
+  <b style="cursor:pointer" onclick="openMatchDetail(${i})">
+   ${homeTeam} - ${awayTeam}
+  </b><br>
+
+  Oynanan: <i>${info.type} - ${info.name}</i><br>
+  İY ${ht.h}-${ht.a} | MS ${ft.h}-${ft.a} ${ok ? "✅" : "❌"}
+  <hr>
+`;
+
+  });
+  let total=Number(totalOdds.innerText);
+  balance+=win?stakeVal*total:-stakeVal;
+  updateBalance();
+  coupon=[];
+  renderCoupon();
+ },2000);
+}
+
+function closeResult(){
+ result.classList.add("hidden");
+ matches.classList.remove("hidden");
+ couponBox.classList.remove("hidden");
+ updateBalance(); // ✅
+}
+function openMatchDetail(index){
+  const c = lastResults[index];
+  if(!c || !c.details){
+  alert("Maç detayı bulunamadı");
+  return;
+}
+  const d = c.details;
+  const [home, away] = c.match.split(" - ");
+
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("matchDetail").classList.remove("hidden");
+
+  let html = `<h3>${home} - ${away}</h3><hr>`;
+
+  d.events.forEach(e => {
+
+    // ⚽ GOL
+    if(e.type === "goal"){
+  html += `
+    <div class="event-row">
+      <div class="event-home">
+        ${e.team === "home" ? `${e.minute}' ⚽` : ""}
+      </div>
+
+      <div class="event-center">
+        ${e.minute}'
+      </div>
+
+      <div class="event-away">
+        ${e.team === "away" ? `⚽ ${e.minute}'` : ""}
+      </div>
+    </div>
+  `;
+
+
+      if(e.cancelled){
+        html += `
+          <div style="margin-left:16px;color:#ff7675">
+            ❌ İptal: ${e.cancelReason}
+          </div>
+        `;
+      }
+    }
+
+    // 🟨 SARI KART
+    if(e.type === "yellow"){
+      html += `
+        <div>
+          ${e.minute}' 🟨 
+          ${e.team === "home" ? home : away}
+        </div>
+      `;
+    }
+
+    // 🟥 KIRMIZI KART
+    if(e.type === "red"){
+      html += `
+        <div style="color:#ff0000">
+          ${e.minute}' 🟥 
+          ${e.team === "home" ? home : away}
+        </div>
+      `;
+    }
+
+  });
+
+  document.getElementById("matchDetailContent").innerHTML = html;
+}
+function closeMatchDetail(){
+  document.getElementById("matchDetail").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+
+  // güvenlik için (bazı cihazlarda lazım)
+  document.getElementById("matchDetailContent").innerHTML = "";
+}
+
+
+
+function updateBalance(){
+  localStorage.setItem("balance", Math.floor(balance));
+
+  document.getElementById("balance").innerText = Math.floor(balance);
+  document.getElementById("balance2").innerText = Math.floor(balance);
+  document.getElementById("balance3").innerText = Math.floor(balance);
+}
+
+
+function updatePossibleWin(){
+  let s = Number(stake.value) || 0;
+  let total = Number(totalOdds.innerText) || 0;
+
+  if(s > balance){
+    stake.value = balance;
+    s = balance;
+  }
+
+  possibleWin.innerText =
+    "Olası Kazanç: " + (s * total).toFixed(2) + " TL";
+}
+
+</script>
+</body>
+</html>
